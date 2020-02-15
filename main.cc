@@ -1,161 +1,216 @@
-#include <exception>
 #include <stdexcept>
-#include <iostream>
-#include <cstdlib>
-#include <ctime>
-#include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
 #include <unistd.h>
 #include <ncurses.h>
 
+#define DEFAULT_POLYCHROMY true
+#define DEFAULT_SYMBOL_SPAWN_FREQUENCY 1
+#define DEFAULT_LINE_SPAWN_FREQUENCY 1
+#define DEFAULT_LINE_SIZE 5
 #define DEFAULT_COLOR_PAIR 1
+#define DEFAULT_LINES_ARRAY_SIZE 300
 #define MY_ATTRIBUTES A_BOLD    //по умолчанию установить A_NORMAL
 #define CLEANER ' '
 
 using namespace std;
 
-class General_exception : public exception
+class GeneralException : public exception
 {
 private:
-	string error_message;
+	string errorMessage_;
 public:
-	General_exception(string message)
+	GeneralException(string message)
 	{
-		error_message = message;
+		errorMessage_ = message;
 	}
+	
 	const char* what() const noexcept override
 	{
-		return error_message.c_str();
+		return errorMessage_.c_str();
 	}
 };
-/*
-class Ncurses_exception : public _General_exception
+
+class NcursesException : public GeneralException
 {
 public:
-	Ncurses_exception(string message)
-	{
-		//General_exception A = new General_exception(message);
-	}
+	NcursesException(string message) : GeneralException(message)
+	{}
 };
-*/
-class Random_symbol
+
+class UserInputException : public GeneralException
+{
+public:
+	UserInputException(string message) : GeneralException(message)
+	{}
+};
+
+class RandomSymbol
 {
 private:
-	char symbol;
-	int attribute;
+	char symbol_;
+	int attribute_;
 public:
-	Random_symbol(bool polychromy) 
+	RandomSymbol(bool isPolychromy) 
 	{
-		symbol = rand() % 94 + 33;
-		if (polychromy)
+		symbol_ = rand() % 94 + 33;
+		if (isPolychromy)
 		{
-			attribute = COLOR_PAIR(rand() % 7 + 1);
+			attribute_ = COLOR_PAIR(rand() % 7 + 1);
 		}
 		else
 		{
-			attribute = COLOR_PAIR(DEFAULT_COLOR_PAIR);
+			attribute_ = COLOR_PAIR(DEFAULT_COLOR_PAIR);
 		}
 	}
 	
-	void print_Random_symbol(int y_poz, int x_poz)
+	void printRandomSymbol(int yCoordinate, int xCoordinate)
 	{
-		if (mvaddch(y_poz, x_poz, symbol | attribute | MY_ATTRIBUTES) == ERR)
-		{
-			throw General_exception("ncurses: mvaddch error");
-		}
+		mvaddch(yCoordinate, xCoordinate, symbol_ | attribute_ | MY_ATTRIBUTES);
 	}
 };
 
 class Line
 {
 private:
-	int line_size;
-	int x_coord;
-	int y_top_coord;
-	int y_bottom_coord;
-	int y_bottom_window_poz;
-	bool polychromy;
+	int size_;
+	int xCoordinate_;
+	int yTopCoordinate_;
+	int yBottomCoordinate_;
+	int yWindowBottomCoordinate_;
+	bool isPolychromy_;
 public:
-	Line(int size, int x_poz, int y_bottom_win, bool l_polychromy)
+	Line(int lineSize, int xCoordinate, int yWindowBottomCoordinate, bool isPolychromy)
 	{
-		line_size = size;
-		x_coord = x_poz;
-		y_bottom_coord = 0;
-		y_top_coord = 0;
-		y_bottom_window_poz = y_bottom_win;
-		polychromy = l_polychromy;
+		size_ = lineSize;
+		xCoordinate_ = xCoordinate;
+		yTopCoordinate_ = 0;
+		yBottomCoordinate_ = 0;
+		yWindowBottomCoordinate_ = yWindowBottomCoordinate;
+		isPolychromy_ = isPolychromy;
 	}
 
-	//вернет: ползет ли линия
-	bool print_line_iter() 
+	void printNextStep() 
 	{
-		if ((y_top_coord - 1) >= y_bottom_window_poz)
+		if ((yTopCoordinate_ /*- 1*/) >= yWindowBottomCoordinate_)
 		{
-			if (y_bottom_coord != y_top_coord)
+			if (yBottomCoordinate_ != yTopCoordinate_)
 			{
-				mvaddch(y_bottom_coord, x_coord, CLEANER);
-				y_bottom_coord++;
+				mvaddch(yBottomCoordinate_, xCoordinate_, CLEANER);
+				yBottomCoordinate_++;
 			}
 			else
 			{
-				return false;
+				throw GeneralException("The line completed its task.");
 			}
 		}
 		else
 		{
-			if ((y_top_coord - y_bottom_coord) >= line_size)
+			if ((yTopCoordinate_ - yBottomCoordinate_) >= size_)
 			{
-				mvaddch(y_bottom_coord, x_coord, CLEANER);
-				y_bottom_coord++;
+				mvaddch(yBottomCoordinate_, xCoordinate_, CLEANER);
+				yBottomCoordinate_++;
 			}
-			Random_symbol* temp = new Random_symbol(polychromy);
-			temp->print_Random_symbol (y_top_coord, x_coord);
+			RandomSymbol* temp = new RandomSymbol(isPolychromy_);
+			temp->printRandomSymbol(yTopCoordinate_, xCoordinate_);
 			delete temp;
-			y_top_coord++;
+			yTopCoordinate_++;
 		}
-		return true;
 	}
 };
 
-class Main_controller
+class MainController
 {
 private:
-	int line_size;
-	int line_spawn_frequency;
-	int symbol_spawn_frequency;
-	bool polychromy;
+	int lineSize_;
+	int lineSpawnFrequency_;
+	int symbolSpawnFrequency_;
+	bool isPolychromy_;
+
+	char* strRealloc_(char* input, int currentSize, int newSize)
+	{
+		char* output = new char [newSize];
+		for (int i = 0; i < currentSize; i++)
+		{
+			if (i == newSize - 1)
+			{
+				output[i] = 0;
+				break;
+			}
+			output[i] = input[i];
+		}
+		delete [] input;
+		return output;
+	}
+	
+	Line** lineRealloc_(Line** input, int currentSize, int newSize)
+	{
+		Line** output = new Line* [newSize];
+		for (int i = 0; i < currentSize; i++)
+		{
+			if (i == newSize)
+			{
+				break;
+			}
+			output[i] = input[i];
+		}
+		delete [] input;
+		return output;
+	}
+
+	char* readCharStr_(FILE* filestream, int arrayIncrementStep) 
+	{
+		int asz = 0;
+		int c;
+		int arraySize = arrayIncrementStep;
+		char* str = new char [arraySize];
+		*str = 0;
+		while (1)
+		{
+			c = fgetc(filestream);
+			if ((c == '\n') || (c == EOF) || (c == '\0'))
+			{
+		    	return str;
+			}
+			str[asz++] = c;
+			if (asz >= arraySize) 
+			{
+				str = strRealloc_(str,asz,arraySize + arrayIncrementStep);
+				arraySize += arrayIncrementStep;
+			}
+			str[asz] = 0;
+		}
+	}
+	
 public:
-	Main_controller() 
+	MainController() 
 	{
+		lineSize_ = DEFAULT_LINE_SIZE;
+		isPolychromy_ = DEFAULT_POLYCHROMY;
+		lineSpawnFrequency_ = DEFAULT_LINE_SPAWN_FREQUENCY;
+		symbolSpawnFrequency_ = DEFAULT_SYMBOL_SPAWN_FREQUENCY;
 		srand(time(NULL));
-		line_size = 5;
-		line_spawn_frequency = 1;
-		symbol_spawn_frequency = 1;
-		polychromy = true;
-		cout << "Hello!" << endl;
 	}
-	
-	void get_parameters()
+
+	void readParameters()
 	{
-		cout << "Enter the following parameters:" << endl;
-		cout << "Size of line: ";
-		//cin >> line_size;
-		cout << "Line spawn frequency: ";
-		//cin >> line_spawn_frequency;
-		cout << "Symbol spawn frequency: ";
-		//cin >> symbol_spawn_frequency;
-		cout << "Do I use different colors: ";
-		//cin >> polychromy;*/
-		getchar();
+		/*char* messages_array[] = {"Enter the following parameters:","Size of line: ","Line spawn frequency: ","Symbol spawn frequency: ","Do I use different colors: "};
+		char polychromy_input[4];
+		printf("%s",messages_array[0]);
+		printf("%s",messages_array[1]);
+		printf("%s",messages_array[2]);
+		printf("%s",messages_array[3]);*/
 	}
 	
-	void ncurses_start(bool if_cursor, bool if_keypad, bool if_echo, bool if_color, int number_of_pairs, int* colors_array)
+	void ncursesStart(bool useCursor, bool useKeypad, bool useEcho, bool useColor, int nColorPairs, int* colorsArray)
 	{
     	if (!initscr()) 
 		{
-			cerr << "ncurses initialization error!" << endl;
-			exit(EXIT_FAILURE);
-   		}
-   		if (if_cursor) 
+			throw NcursesException("Initialization error.");
+		}
+   		if (useCursor) 
 		{
         	curs_set(1);
    		}
@@ -163,7 +218,7 @@ public:
 		{
        		curs_set(0);
     	}
-    	if (if_keypad)
+    	if (useKeypad)
 		{
         	keypad(stdscr, 1);
     	}
@@ -171,7 +226,7 @@ public:
 		{
         	keypad(stdscr, 0);
     	}
-    	if (if_echo) 
+    	if (useEcho) 
 		{
         	echo();
     	}
@@ -180,22 +235,22 @@ public:
         	noecho();
     	}
     	cbreak();    //частичный контроль клавиатуры (Ctrl+С - закроет программу)
-    	if (if_color) 
+    	if (useColor) 
 		{
         	start_color();
         	if (!has_colors()) 
 			{
-            	cerr << "This terminal does not support colors!" << endl;
-				endwin();
-            	exit(EXIT_FAILURE);
+            	throw NcursesException("This terminal does not support colors.");
         	}
-        	int i = 0, n = 1, check = number_of_pairs;
-        	while (number_of_pairs)
+        	int i = 0;
+			int pairNo = 1;
+			int check = nColorPairs;
+        	while (nColorPairs)
 			{
-            	init_pair(n,colors_array[i],colors_array[i+1]);
+            	init_pair(pairNo,colorsArray[i],colorsArray[i+1]);
             	i += 2;
-            	n++;
-            	number_of_pairs--;
+            	pairNo++;
+            	nColorPairs--;
         	}
         	if (check != 0) 
 			{
@@ -203,45 +258,55 @@ public:
         	}
     	}
 	}
-
-	void drawing_start()
+	
+	void drawingStart()
 	{
-		int x_max;
-		int y_max;
-		int lines_array_size = 50;
-		getmaxyx(stdscr,y_max,x_max);
-		Line** lines_array = new Line* [lines_array_size];
-		bool can_allocate_mem = true;
-		int lines_array_top_index = 0;
-		int lines_array_bottom_index = 0;
-		int lines_array_current_index = 0;
+		int xMaxCoordinate;
+		int yMaxCoordinate;
+		getmaxyx(stdscr, yMaxCoordinate, xMaxCoordinate);
+		bool canAllocateMemory = true;
+		int linesArrayTopIndex = 0;
+		int linesArrayBottomIndex = 0;
+		int linesArrayCurrentIndex = 0;
+		int linesArraySize = DEFAULT_LINES_ARRAY_SIZE;
+		Line** linesArray = new Line* [linesArraySize];
+		struct timespec request;
+		request.tv_sec = 0;
+		request.tv_nsec = 90000000;
 		while (1)
 		{
-			//создание линий
-			for (int i = 0; i < line_spawn_frequency; i++)
+			for (int i = 0; i < lineSpawnFrequency_; i++)
 			{
-				lines_array[lines_array_top_index] = new Line(line_size,rand() % x_max,y_max,polychromy);
-				lines_array_top_index++;
+				linesArray[linesArrayTopIndex] = new Line(lineSize_, rand() % xMaxCoordinate, yMaxCoordinate, isPolychromy_);
+				linesArrayTopIndex++;
 			}
-			//печать линий
-			for (int i = 0; i < symbol_spawn_frequency; i++)
+			//символы должны печататься по 1 за заход (изменять можно время)
+			//у линий число меняется из расчета чтоб за 1 сек было нужное чисо
+			for (int i = 0; i < symbolSpawnFrequency_; i++)
 			{
-				for (int i = 0; i < lines_array_top_index; i++)
+				for (int i = 0; i < linesArrayTopIndex; i++)
 				{
-					if (lines_array[i]->print_line_iter() == false)
+					try
 					{
-						delete lines_array[i];
-						can_allocate_mem = false;
-						lines_array_current_index = 0;
+						linesArray[i]->printNextStep();
+					}
+					catch(...)
+					{
+						//delete linesArray[i];
+						canAllocateMemory = false;
+						linesArrayCurrentIndex = 0;
 					}
 				}
 			}
 			refresh();
-			sleep(1);
+			if (nanosleep(&request, NULL) != 0)
+			{
+				throw GeneralException("nanosleep error.");
+			}
 		}
 	}
 	
-	void ncurses_end()
+	void ncursesEnd()
 	{
 		endwin();
 	}
@@ -249,12 +314,12 @@ public:
 
 int main(int argc, char* argv[])
 {
-	int colors_array[] = {COLOR_GREEN,0,COLOR_RED,0,COLOR_BLUE,0,COLOR_CYAN,0,COLOR_YELLOW,0,COLOR_MAGENTA,0,COLOR_WHITE,0};
-	Main_controller controller;
-	controller.get_parameters();
-	controller.ncurses_start(0,1,0,1,7,colors_array);
-	controller.drawing_start();
-	//гипотетический controller.drawing_stop...
-	//controller.ncurses_end();
+	int colorsArray[] = {COLOR_GREEN,0,COLOR_RED,0,COLOR_BLUE,0,COLOR_CYAN,0,COLOR_YELLOW,0,COLOR_MAGENTA,0,COLOR_WHITE,0};
+	MainController controller;
+	controller.readParameters();
+	controller.ncursesStart(0,1,0,1,7,colorsArray);
+	controller.drawingStart();
+	//гипотетический controller.drawingStop...
+	//controller.ncursesEnd();
 	//exit(EXIT_SUCCESS);
 }
