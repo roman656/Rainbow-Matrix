@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <list>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -7,11 +8,11 @@
 #include <ncurses.h>
 
 #define DEFAULT_POLYCHROMY true
-#define DEFAULT_SYMBOL_SPAWN_FREQUENCY 1
-#define DEFAULT_LINE_SPAWN_FREQUENCY 1
-#define DEFAULT_LINE_SIZE 5
+#define DEFAULT_SYMBOL_SPAWN_FREQUENCY 3
+#define DEFAULT_LINE_SPAWN_FREQUENCY 5
+#define DEFAULT_LINE_SIZE 8
 #define DEFAULT_COLOR_PAIR 1
-#define DEFAULT_LINES_ARRAY_SIZE 300
+#define CHAR_ARRAY_INCREMENT_STEP 5
 #define MY_ATTRIBUTES A_BOLD    //по умолчанию установить A_NORMAL
 #define CLEANER ' '
 
@@ -33,10 +34,10 @@ public:
 	}
 };
 
-class NcursesException : public GeneralException
+class LineException : public GeneralException
 {
 public:
-	NcursesException(string message) : GeneralException(message)
+	LineException(string message) : GeneralException(message)
 	{}
 };
 
@@ -94,16 +95,28 @@ public:
 
 	void printNextStep() 
 	{
-		if ((yTopCoordinate_ /*- 1*/) >= yWindowBottomCoordinate_)
+		if ((yTopCoordinate_) >= yWindowBottomCoordinate_)
 		{
-			if (yBottomCoordinate_ != yTopCoordinate_)
+			if ((yBottomCoordinate_ != yTopCoordinate_) && (yBottomCoordinate_ != 0))
 			{
 				mvaddch(yBottomCoordinate_, xCoordinate_, CLEANER);
 				yBottomCoordinate_++;
 			}
+			else if ((yBottomCoordinate_ != yTopCoordinate_) && (yBottomCoordinate_ == 0))
+			{
+				if ((yTopCoordinate_ - yBottomCoordinate_) < size_)
+				{
+					size_--;
+				}
+				else
+				{
+					mvaddch(yBottomCoordinate_, xCoordinate_, CLEANER);
+					yBottomCoordinate_++;
+				}
+			}
 			else
 			{
-				throw GeneralException("The line completed its task.");
+				throw LineException("The line has completed its task.");
 			}
 		}
 		else
@@ -128,32 +141,17 @@ private:
 	int lineSpawnFrequency_;
 	int symbolSpawnFrequency_;
 	bool isPolychromy_;
-
+	
+	/*
 	char* strRealloc_(char* input, int currentSize, int newSize)
 	{
+		if (newSize < currentSize)
+		{
+			throw GeneralException("In strRealloc_(): the size of the new array is smaller than the old one.");
+		}
 		char* output = new char [newSize];
 		for (int i = 0; i < currentSize; i++)
 		{
-			if (i == newSize - 1)
-			{
-				output[i] = 0;
-				break;
-			}
-			output[i] = input[i];
-		}
-		delete [] input;
-		return output;
-	}
-	
-	Line** lineRealloc_(Line** input, int currentSize, int newSize)
-	{
-		Line** output = new Line* [newSize];
-		for (int i = 0; i < currentSize; i++)
-		{
-			if (i == newSize)
-			{
-				break;
-			}
 			output[i] = input[i];
 		}
 		delete [] input;
@@ -183,7 +181,7 @@ private:
 			str[asz] = 0;
 		}
 	}
-	
+	*/
 public:
 	MainController() 
 	{
@@ -206,9 +204,10 @@ public:
 	
 	void ncursesStart(bool useCursor, bool useKeypad, bool useEcho, bool useColor, int nColorPairs, int* colorsArray)
 	{
-    	if (!initscr()) 
+		if (!initscr()) 
 		{
-			throw NcursesException("Initialization error.");
+			fprintf(stderr,"ncursesStart() -> Initialization error.\n");
+			exit(EXIT_FAILURE);
 		}
    		if (useCursor) 
 		{
@@ -240,7 +239,9 @@ public:
         	start_color();
         	if (!has_colors()) 
 			{
-            	throw NcursesException("This terminal does not support colors.");
+				endwin();
+				fprintf(stderr,"ncursesStart() -> This terminal does not support colors.\n");
+				exit(EXIT_FAILURE);
         	}
         	int i = 0;
 			int pairNo = 1;
@@ -264,45 +265,81 @@ public:
 		int xMaxCoordinate;
 		int yMaxCoordinate;
 		getmaxyx(stdscr, yMaxCoordinate, xMaxCoordinate);
-		bool canAllocateMemory = true;
-		int linesArrayTopIndex = 0;
-		int linesArrayBottomIndex = 0;
-		int linesArrayCurrentIndex = 0;
-		int linesArraySize = DEFAULT_LINES_ARRAY_SIZE;
-		Line** linesArray = new Line* [linesArraySize];
+		list <Line*> linesList;
+		Line* temp = NULL;
 		struct timespec request;
 		request.tv_sec = 0;
-		request.tv_nsec = 90000000;
+		request.tv_nsec = 999999998 / symbolSpawnFrequency_;
+		bool isTimeToSpawnLines = true;
+		int timeIntervalCounter = symbolSpawnFrequency_;
 		while (1)
 		{
-			for (int i = 0; i < lineSpawnFrequency_; i++)
+			if (timeIntervalCounter == symbolSpawnFrequency_)
 			{
-				linesArray[linesArrayTopIndex] = new Line(lineSize_, rand() % xMaxCoordinate, yMaxCoordinate, isPolychromy_);
-				linesArrayTopIndex++;
+				isTimeToSpawnLines = true;
+				timeIntervalCounter = 0;
 			}
-			//символы должны печататься по 1 за заход (изменять можно время)
-			//у линий число меняется из расчета чтоб за 1 сек было нужное чисо
-			for (int i = 0; i < symbolSpawnFrequency_; i++)
+			if (isTimeToSpawnLines)
 			{
-				for (int i = 0; i < linesArrayTopIndex; i++)
+				for (int i = 0; i < lineSpawnFrequency_; i++)
 				{
 					try
 					{
-						linesArray[i]->printNextStep();
+						temp = new Line(lineSize_, rand() % xMaxCoordinate, yMaxCoordinate, isPolychromy_);
+						linesList.push_back(temp);
+						temp = NULL;
 					}
-					catch(...)
+					catch (bad_alloc& allocEx)
 					{
-						//delete linesArray[i];
-						canAllocateMemory = false;
-						linesArrayCurrentIndex = 0;
+						for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+    					{
+							delete *iterator;
+						}
+						linesList.clear();
+						endwin();
+						fprintf(stderr,"Lines spawner -> Memory error: %s\n",allocEx.what());
+						exit(EXIT_FAILURE);
 					}
+				}
+				isTimeToSpawnLines = false;
+			}
+			for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+    		{
+				try
+				{
+					(*iterator)->printNextStep();
+				}
+				catch(LineException& finishLineExc)
+				{
+					delete *iterator;
+					iterator = linesList.erase(iterator);
+					iterator--;
+				}
+				catch (bad_alloc& allocEx)
+				{
+					for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+    				{
+						delete *iterator;
+					}
+					linesList.clear();
+					endwin();
+					fprintf(stderr,"Symbol spawner -> Memory error: %s\n",allocEx.what());
+					exit(EXIT_FAILURE);
 				}
 			}
 			refresh();
 			if (nanosleep(&request, NULL) != 0)
 			{
-				throw GeneralException("nanosleep error.");
+				for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+    			{
+					delete *iterator;
+				}
+				linesList.clear();
+				endwin();
+				fprintf(stderr,"drawingStart() -> nanosleep() error.\n");
+				exit(EXIT_FAILURE);
 			}
+			timeIntervalCounter++;
 		}
 	}
 	
