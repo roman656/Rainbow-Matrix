@@ -1,18 +1,18 @@
 #include <stdexcept>
 #include <list>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <string.h>
-#include <unistd.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <time.h>
+//#include <ctype.h>
+//#include <string.h>
+//#include <unistd.h>
 #include <ncurses.h>
 
 #define DEFAULT_POLYCHROMY true
 #define DEFAULT_SYMBOL_SPAWN_FREQUENCY 3
 #define DEFAULT_LINE_SPAWN_FREQUENCY 5
-#define DEFAULT_LINE_SIZE 8
+#define DEFAULT_LINE_SIZE 5
 #define DEFAULT_COLOR_PAIR 1
-#define CHAR_ARRAY_INCREMENT_STEP 5
 #define MY_ATTRIBUTES A_BOLD    //по умолчанию установить A_NORMAL
 #define CLEANER ' '
 
@@ -141,47 +141,103 @@ private:
 	int lineSpawnFrequency_;
 	int symbolSpawnFrequency_;
 	bool isPolychromy_;
-	
-	/*
-	char* strRealloc_(char* input, int currentSize, int newSize)
+
+	void readNUserInputCharacters_(char* inputArray, int inputArraySize, int numberOfCharactersToRead)
 	{
-		if (newSize < currentSize)
+		if (inputArraySize <= numberOfCharactersToRead)
 		{
-			throw GeneralException("In strRealloc_(): the size of the new array is smaller than the old one.");
+			throw GeneralException("readNUserInputCharacters_() -> Input array size is too small.\n");
 		}
-		char* output = new char [newSize];
-		for (int i = 0; i < currentSize; i++)
+		inputArray[0] = 0;
+		int c;
+		int i = 0;
+		while (numberOfCharactersToRead > 0)
 		{
-			output[i] = input[i];
+			c = fgetc(stdin);
+			if (c == '\n')
+			{
+				inputArray[i++] = c;
+				inputArray[i] = 0;
+				return;
+			}
+			inputArray[i++] = c;
+			inputArray[i] = 0;
+			numberOfCharactersToRead--;
 		}
-		delete [] input;
-		return output;
+		while (fgetc(stdin) != '\n') {}
 	}
 
-	char* readCharStr_(FILE* filestream, int arrayIncrementStep) 
+	void determUserIntegerInput_(char* inputArray, int maxValue, int minValue, int& parameter)
 	{
-		int asz = 0;
-		int c;
-		int arraySize = arrayIncrementStep;
-		char* str = new char [arraySize];
-		*str = 0;
+		int i = 0;
+		bool isCorrect = false;
 		while (1)
 		{
-			c = fgetc(filestream);
-			if ((c == '\n') || (c == EOF) || (c == '\0'))
+			if (inputArray[i] == '\0')
 			{
-		    	return str;
+				break;
 			}
-			str[asz++] = c;
-			if (asz >= arraySize) 
+			else if ((inputArray[i] == '\n') && (i != 0))
 			{
-				str = strRealloc_(str,asz,arraySize + arrayIncrementStep);
-				arraySize += arrayIncrementStep;
+				isCorrect = true;
+				break;
 			}
-			str[asz] = 0;
+			else if (isdigit(inputArray[i]) == 0)
+			{
+				break;
+			}
+			i++;
+		}
+		if (!isCorrect)
+		{
+			throw UserInputException("Wrong input! Try again: ");
+		}
+		int value = atoi(inputArray);
+		if ((value > maxValue) || (value < minValue))
+		{
+			throw UserInputException("Wrong value! Try again: ");
+		}
+		parameter = value;
+	}
+
+	void determUserSymbolInput_(char* inputArray, bool& parameter)
+	{
+		int i = 0;
+		bool isCorrect = false;
+		while (1)
+		{
+			if (inputArray[i] == '\0')
+			{
+				break;
+			}
+			else if ((inputArray[i] == '\n') && (i == 1))
+			{
+				isCorrect = true;
+				break;
+			}
+			else if (isalpha(inputArray[i]) == 0)
+			{
+				break;
+			}
+			i++;
+		}
+		if (!isCorrect)
+		{
+			throw UserInputException("Wrong input! Try again: ");
+		}
+		if ((inputArray[0] == 'Y') || (inputArray[0] == 'y'))
+		{
+			parameter = true;
+		}
+		else if ((inputArray[0] == 'N') || (inputArray[0] == 'n'))
+		{
+			parameter = false;
+		}
+		else
+		{
+			throw UserInputException("Wrong value! Try again: ");
 		}
 	}
-	*/
 public:
 	MainController() 
 	{
@@ -194,12 +250,85 @@ public:
 
 	void readParameters()
 	{
-		/*char* messages_array[] = {"Enter the following parameters:","Size of line: ","Line spawn frequency: ","Symbol spawn frequency: ","Do I use different colors: "};
-		char polychromy_input[4];
-		printf("%s",messages_array[0]);
-		printf("%s",messages_array[1]);
-		printf("%s",messages_array[2]);
-		printf("%s",messages_array[3]);*/
+		string messagesArray[] = {"Enter the following parameters:\n","Size of line: ","Line spawn frequency: ","Symbol spawn frequency: ","Do I use different colors [Y/N]: "};
+		char userInputArray[4];
+		printf("%s",messagesArray[0].c_str());
+		printf("%s",messagesArray[1].c_str());
+		while (1)
+		{
+			try
+			{		
+				readNUserInputCharacters_(userInputArray, 4, 3);
+				determUserIntegerInput_(userInputArray, 30, 1, lineSize_);
+				break;
+			}
+			catch (UserInputException& inputExc)
+			{
+				printf("%s", inputExc.what());
+			}
+			catch (GeneralException& parametersExc)
+			{
+				fprintf(stderr,"%s", parametersExc.what());
+				exit(EXIT_FAILURE);
+			}
+		}
+		printf("%s",messagesArray[2].c_str());
+		while (1)
+		{
+			try
+			{		
+				readNUserInputCharacters_(userInputArray, 4, 3);
+				determUserIntegerInput_(userInputArray, 30, 1, lineSpawnFrequency_);
+				break;
+			}
+			catch (UserInputException& inputExc)
+			{
+				printf("%s", inputExc.what());
+			}
+			catch (GeneralException& parametersExc)
+			{
+				fprintf(stderr,"%s", parametersExc.what());
+				exit(EXIT_FAILURE);
+			}
+		}
+		printf("%s",messagesArray[3].c_str());
+		while (1)
+		{
+			try
+			{		
+				readNUserInputCharacters_(userInputArray, 4, 3);
+				determUserIntegerInput_(userInputArray, 30, 1, symbolSpawnFrequency_);
+				break;
+			}
+			catch (UserInputException& inputExc)
+			{
+				printf("%s", inputExc.what());
+			}
+			catch (GeneralException& parametersExc)
+			{
+				fprintf(stderr,"%s", parametersExc.what());
+				exit(EXIT_FAILURE);
+			}
+		}
+		printf("%s",messagesArray[4].c_str());
+		while (1)
+		{
+			try
+			{		
+				readNUserInputCharacters_(userInputArray, 4, 2);
+				determUserSymbolInput_(userInputArray, isPolychromy_);
+				break;
+			}
+			catch (UserInputException& inputExc)
+			{
+				printf("%s", inputExc.what());
+			}
+			catch (GeneralException& parametersExc)
+			{
+				fprintf(stderr,"%s", parametersExc.what());
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 	
 	void ncursesStart(bool useCursor, bool useKeypad, bool useEcho, bool useColor, int nColorPairs, int* colorsArray)
