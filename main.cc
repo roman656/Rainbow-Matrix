@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 		COLOR_WHITE,	COLOR_BLACK 
 	};
 	MainController controller;
-	//controller.readParameters();
+	controller.readParameters();
 	controller.ncursesStart(0,1,0,1,7,colorsArray);
 	controller.drawingStart();
 }

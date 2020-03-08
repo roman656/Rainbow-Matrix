@@ -1,133 +1,82 @@
 #include "MainController.h"
 
-void MainController::readNUserInputCharacters_(char* inputArray, int inputArraySize, int numberOfCharactersToRead)
+void MainController::readUserIntegerInput(int maxValue, int minValue, int& parameter)
 {
-	if (inputArraySize <= numberOfCharactersToRead)
+	int input = 0;
+	cin >> input;
+	if (cin.fail())
 	{
-		throw GeneralException("readNUserInputCharacters_() -> Input array size is too small.\n");
-	}
-	inputArray[0] = 0;
-	int c;
-	int i = 0;
-	while (numberOfCharactersToRead > 0)
-	{
-		c = fgetc(stdin);
-		if (c == '\n')
-		{
-			inputArray[i++] = c;
-			inputArray[i] = 0;
-			return;
-		}
-		inputArray[i++] = c;
-		inputArray[i] = 0;
-		numberOfCharactersToRead--;
-	}
-	while (fgetc(stdin) != '\n') {}
-}
-
-void MainController::determUserIntegerInput_(char* inputArray, int maxValue, int minValue, int& parameter)
-{
-	int i = 0;
-	bool isCorrect = false;
-	while (1)
-	{
-		if (inputArray[i] == '\0')
-		{
-			break;
-		}
-		else if ((inputArray[i] == '\n') && (i != 0))
-		{
-			isCorrect = true;
-			break;
-		}
-		else if (isdigit(inputArray[i]) == 0)
-		{
-			break;
-		}
-		i++;
-	}
-	if (!isCorrect)
-	{
+		cin.clear();
+		while (cin.get() != '\n');
 		throw UserInputException("Wrong input! Try again [1;30]: ");
 	}
-	int value = atoi(inputArray);
-	if ((value > maxValue) || (value < minValue))
+	else if ((cin.peek() != '\n') || (input > maxValue) || (input < minValue))
 	{
-		throw UserInputException("Wrong value! Try again [1;30]: ");
-	}
-	parameter = value;
-}
-
-void MainController::determUserSymbolInput_(char* inputArray, bool& parameter)
-{
-	int i = 0;
-	bool isCorrect = false;
-	while (1)
-	{
-		if (inputArray[i] == '\0')
-		{
-			break;
-		}
-		else if ((inputArray[i] == '\n') && (i == 1))
-		{
-			isCorrect = true;
-			break;
-		}
-		else if (isalpha(inputArray[i]) == 0)
-		{
-			break;
-		}
-		i++;
-	}
-	if (!isCorrect)
-	{
-		throw UserInputException("Wrong input! Try again [Y/N]: ");
-	}
-	if ((inputArray[0] == 'Y') || (inputArray[0] == 'y'))
-	{
-		parameter = true;
-	}
-	else if ((inputArray[0] == 'N') || (inputArray[0] == 'n'))
-	{
-		parameter = false;
+		while (cin.get() != '\n');
+		throw UserInputException("Wrong input! Try again [1;30]: ");
 	}
 	else
 	{
-		throw UserInputException("Wrong value! Try again [Y/N]: ");
+		parameter = input;
+	}
+}
+
+void MainController::readUserSymbolInput(bool& parameter)
+{
+	char input = 0;
+	cin >> input;
+	if (cin.fail())
+	{
+		cin.clear();
+		while (cin.get() != '\n');
+		throw UserInputException("Wrong input! Try again [Y/N]: ");
+	}
+	else if (cin.peek() != '\n')
+	{
+		while (cin.get() != '\n');
+		throw UserInputException("Wrong input! Try again [Y/N]: ");
+	}
+	else
+	{
+		if ((input == 'Y') || (input == 'y'))
+		{
+			parameter = true;
+		}
+		else if ((input == 'N') || (input == 'n'))
+		{
+			parameter = false;
+		}
+		else
+		{
+			throw UserInputException("Wrong input! Try again [Y/N]: ");
+		}
 	}
 }
 
 MainController::MainController() 
 {
-	lineSize_ = DEFAULT_LINE_SIZE;
-	isPolychromy_ = DEFAULT_POLYCHROMY;
-	lineSpawnFrequency_ = DEFAULT_LINE_SPAWN_FREQUENCY;
-	symbolSpawnFrequency_ = DEFAULT_SYMBOL_SPAWN_FREQUENCY;
+	lineSize = DEFAULT_LINE_SIZE;
+	isPolychromy = DEFAULT_POLYCHROMY;
+	lineSpawnFrequency = DEFAULT_LINE_SPAWN_FREQUENCY;
+	symbolSpawnFrequency = DEFAULT_SYMBOL_SPAWN_FREQUENCY;
 	srand(time(NULL));
 }
 
 void MainController::readParameters()
 {
 	string messagesArray[] = {"Enter the following parameters:\n","Size of line [1;30]: ","Line spawn frequency [1;30]: ","Symbol spawn frequency [1;30]: ","Do I use different colors [Y/N]: "};
-	char userInputArray[4];
 	printf("%s",messagesArray[0].c_str());
 	printf("%s",messagesArray[1].c_str());
 	while (1)
 	{
 		try
 		{		
-			readNUserInputCharacters_(userInputArray, 4, 3);
-			determUserIntegerInput_(userInputArray, 30, 1, lineSize_);
+			readUserIntegerInput(30, 1, lineSize);
 			break;
 		}
 		catch (UserInputException& inputExc)
 		{
 			printf("%s", inputExc.what());
-		}
-		catch (GeneralException& parametersExc)
-		{
-			fprintf(stderr,"%s", parametersExc.what());
-			exit(EXIT_FAILURE);
 		}
 	}
 	printf("%s",messagesArray[2].c_str());
@@ -135,18 +84,12 @@ void MainController::readParameters()
 	{
 		try
 		{		
-			readNUserInputCharacters_(userInputArray, 4, 3);
-			determUserIntegerInput_(userInputArray, 30, 1, lineSpawnFrequency_);
+			readUserIntegerInput(30, 1, lineSpawnFrequency);
 			break;
 		}
 		catch (UserInputException& inputExc)
 		{
 			printf("%s", inputExc.what());
-		}
-		catch (GeneralException& parametersExc)
-		{
-			fprintf(stderr,"%s", parametersExc.what());
-			exit(EXIT_FAILURE);
 		}
 	}
 	printf("%s",messagesArray[3].c_str());
@@ -154,18 +97,12 @@ void MainController::readParameters()
 	{
 		try
 		{		
-			readNUserInputCharacters_(userInputArray, 4, 3);
-			determUserIntegerInput_(userInputArray, 30, 1, symbolSpawnFrequency_);
+			readUserIntegerInput(30, 1, symbolSpawnFrequency);
 			break;
 		}
 		catch (UserInputException& inputExc)
 		{
 			printf("%s", inputExc.what());
-		}
-		catch (GeneralException& parametersExc)
-		{
-			fprintf(stderr,"%s", parametersExc.what());
-			exit(EXIT_FAILURE);
 		}
 	}
 	printf("%s",messagesArray[4].c_str());
@@ -173,18 +110,12 @@ void MainController::readParameters()
 	{
 		try
 		{		
-			readNUserInputCharacters_(userInputArray, 4, 2);
-			determUserSymbolInput_(userInputArray, isPolychromy_);
+			readUserSymbolInput(isPolychromy);
 			break;
 		}
 		catch (UserInputException& inputExc)
 		{
 			printf("%s", inputExc.what());
-		}
-		catch (GeneralException& parametersExc)
-		{
-			fprintf(stderr,"%s", parametersExc.what());
-			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -252,35 +183,48 @@ void MainController::drawingStart()
 	int xMaxCoordinate;
 	int yMaxCoordinate;
 	getmaxyx(stdscr, yMaxCoordinate, xMaxCoordinate);
-	list <Line*> linesList;
+	List <Line*> linesList;
 	Line* temp = NULL;
 	struct timespec request;
 	request.tv_sec = 0;
-	request.tv_nsec = 999999998 / symbolSpawnFrequency_;
+	request.tv_nsec = 999999998 / symbolSpawnFrequency;
 	bool isTimeToSpawnLines = true;
-	int timeIntervalCounter = symbolSpawnFrequency_;
+	int timeIntervalCounter = symbolSpawnFrequency;
 	while (1)
 	{
-		if (timeIntervalCounter == symbolSpawnFrequency_)
+		if (timeIntervalCounter == symbolSpawnFrequency)
 		{
 			isTimeToSpawnLines = true;
 			timeIntervalCounter = 0;
 		}
 		if (isTimeToSpawnLines)
 		{
-			for (int i = 0; i < lineSpawnFrequency_; i++)
+			for (int i = 0; i < lineSpawnFrequency; i++)
 			{
 				try
 				{
-					temp = new Line(lineSize_, rand() % xMaxCoordinate, yMaxCoordinate, isPolychromy_, rand() % symbolSpawnFrequency_);
+					temp = new Line(lineSize, rand() % xMaxCoordinate, yMaxCoordinate, isPolychromy, rand() % symbolSpawnFrequency);
 					linesList.push_back(temp);
 					temp = NULL;
 				}
+				catch (ListException& ListEx)
+				{
+					int limit = linesList.getLength();
+					for (int i = 0; i < limit; i++)
+    				{
+						delete linesList[i];
+					}
+					linesList.clear();
+					endwin();
+					fprintf(stderr,"Lines spawner -> %s",ListEx.what());
+					exit(EXIT_FAILURE);
+				}
 				catch (bad_alloc& allocEx)
 				{
-					for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+					int limit = linesList.getLength();
+					for (int i = 0; i < limit; i++)
     				{
-						delete *iterator;
+						delete linesList[i];
 					}
 					linesList.clear();
 					endwin();
@@ -290,23 +234,24 @@ void MainController::drawingStart()
 			}
 			isTimeToSpawnLines = false;
 		}
-		for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+		for (int i = 0; i < linesList.getLength(); i++)
     	{
 			try
 			{
-				(*iterator)->printNextStep();
+				(linesList[i])->printNextStep();
 			}
 			catch(LineException& finishLineExc)
 			{
-				delete *iterator;
-				iterator = linesList.erase(iterator);
-				iterator--;
+				delete linesList[i];
+				linesList.erase(i);
+				i--;
 			}
 			catch (bad_alloc& allocEx)
 			{
-				for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+				int limit = linesList.getLength();
+				for (int i = 0; i < limit; i++)
     			{
-					delete *iterator;
+					delete linesList[i];
 				}
 				linesList.clear();
 				endwin();
@@ -317,13 +262,14 @@ void MainController::drawingStart()
 		refresh();
 		if (nanosleep(&request, NULL) != 0)
 		{
-			for (auto iterator = linesList.begin(); iterator != linesList.end(); iterator++)
+			int limit = linesList.getLength();
+			for (int i = 0; i < limit; i++)
     		{
-				delete *iterator;
+				delete linesList[i];
 			}
 			linesList.clear();
 			endwin();
-			fprintf(stderr,"drawingStart() -> nanosleep() error.\n");
+			fprintf(stderr,"drawingStart() -> nanosleep() error. Value: %ld\n", request.tv_nsec);
 			exit(EXIT_FAILURE);
 		}
 		timeIntervalCounter++;

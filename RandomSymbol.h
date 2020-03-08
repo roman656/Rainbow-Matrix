@@ -12,8 +12,8 @@ using namespace std;
 class RandomSymbol
 {
 private:
-	char symbol_;
-	int attribute_;
+	char symbol;
+	int attribute;
 public:
 	RandomSymbol(bool isPolychromy);
 	void printRandomSymbol(int yCoordinate, int xCoordinate);

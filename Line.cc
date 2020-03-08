@@ -2,39 +2,39 @@
 
 Line::Line(int lineSize, int xCoordinate, int yWindowBottomCoordinate, bool isPolychromy, int delay)
 {
-	size_ = lineSize;
-	xCoordinate_ = xCoordinate;
-	yTopCoordinate_ = 0;
-	yBottomCoordinate_ = 0;
-	yWindowBottomCoordinate_ = yWindowBottomCoordinate;
-	isPolychromy_ = isPolychromy;
-	delay_ = delay;
+	this->size = lineSize;
+	this->xCoordinate = xCoordinate;
+	this->yTopCoordinate = 0;
+	this->yBottomCoordinate= 0;
+	this->yWindowBottomCoordinate = yWindowBottomCoordinate;
+	this->isPolychromy = isPolychromy;
+	this->delay = delay;
 }
 
 void Line::printNextStep() 
 {
-	if (delay_ > 0)
+	if (delay > 0)
 	{
-		delay_--;
+		delay--;
 		return;
 	}
-	if ((yTopCoordinate_) >= yWindowBottomCoordinate_)
+	if ((yTopCoordinate) >= yWindowBottomCoordinate)
 	{
-		if ((yBottomCoordinate_ != yTopCoordinate_) && (yBottomCoordinate_ != 0))
+		if ((yBottomCoordinate != yTopCoordinate) && (yBottomCoordinate != 0))
 		{
-			mvaddch(yBottomCoordinate_, xCoordinate_, ' ');
-			yBottomCoordinate_++;
+			mvaddch(yBottomCoordinate, xCoordinate, ' ');
+			yBottomCoordinate++;
 		}
-		else if ((yBottomCoordinate_ != yTopCoordinate_) && (yBottomCoordinate_ == 0))
+		else if ((yBottomCoordinate != yTopCoordinate) && (yBottomCoordinate == 0))
 		{
-			if ((yTopCoordinate_ - yBottomCoordinate_) < size_)
+			if ((yTopCoordinate - yBottomCoordinate) < size)
 			{
-				size_--;
+				size--;
 			}
 			else
 			{
-				mvaddch(yBottomCoordinate_, xCoordinate_, ' ');
-				yBottomCoordinate_++;
+				mvaddch(yBottomCoordinate, xCoordinate, ' ');
+				yBottomCoordinate++;
 			}
 		}
 		else
@@ -44,14 +44,14 @@ void Line::printNextStep()
 	}
 	else
 	{
-		if ((yTopCoordinate_ - yBottomCoordinate_) >= size_)
+		if ((yTopCoordinate - yBottomCoordinate) >= size)
 		{
-			mvaddch(yBottomCoordinate_, xCoordinate_, ' ');
-			yBottomCoordinate_++;
+			mvaddch(yBottomCoordinate, xCoordinate, ' ');
+			yBottomCoordinate++;
 		}
-		RandomSymbol* temp = new RandomSymbol(isPolychromy_);
-		temp->printRandomSymbol(yTopCoordinate_, xCoordinate_);
+		RandomSymbol* temp = new RandomSymbol(isPolychromy);
+		temp->printRandomSymbol(yTopCoordinate, xCoordinate);
 		delete temp;
-		yTopCoordinate_++;
+		yTopCoordinate++;
 	}
 }

@@ -7,13 +7,13 @@
 class Line
 {
 private:
-	int delay_;
-	int size_;
-	int xCoordinate_;
-	int yTopCoordinate_;
-	int yBottomCoordinate_;
-	int yWindowBottomCoordinate_;
-	bool isPolychromy_;
+	int delay;
+	int size;
+	int xCoordinate;
+	int yTopCoordinate;
+	int yBottomCoordinate;
+	int yWindowBottomCoordinate;
+	bool isPolychromy;
 public:
 	Line(int lineSize, int xCoordinate, int yWindowBottomCoordinate, bool isPolychromy, int delay);
 	void printNextStep();

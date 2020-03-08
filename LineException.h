@@ -3,7 +3,7 @@
 
 #include "GeneralException.h"
 
-class LineException : public GeneralException
+class LineException : public GeneralException 
 {
 public:
 	LineException(string message) : GeneralException(message)
@@ -11,3 +11,4 @@ public:
 };
 
 #endif // _LINEEXCEPTION_H_
+
