@@ -1,6 +1,6 @@
 #include "GeneralException.h"
 
-GeneralException::GeneralException(string message)
+GeneralException::GeneralException(std::string message)
 {
 	errorMessage = message;
 }

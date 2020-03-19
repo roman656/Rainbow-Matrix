@@ -13,7 +13,7 @@ RandomSymbol::RandomSymbol(bool isPolychromy)
 	}
 }
 
-void RandomSymbol::printRandomSymbol(int yCoordinate, int xCoordinate)
+void RandomSymbol::printRandomSymbol(short yCoordinate, short xCoordinate)
 {
 	mvaddch(yCoordinate, xCoordinate, symbol | attribute | MY_ATTRIBUTES);
 }

@@ -3,10 +3,12 @@
 
 #include "GeneralException.h"
 
+///Класс ислючения для пользовательсого ввода.
 class UserInputException : public GeneralException
 {
 public:
-	UserInputException(string message) : GeneralException(message)
+	///Конструктор.
+	UserInputException(std::string message) : GeneralException(message)
 	{}
 };
 

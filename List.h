@@ -3,25 +3,47 @@
 
 #include "ListException.h"
 
+///Шаблонный класс списка (односвязного, не кольцевого).
 template <class T>
 class List
 {
 private:
-	int length;
-	struct ListElement
+	int length;					//Размер списка (Количество элементов в списке).
+	struct ListElement			//Структура элемента списка.
 	{
-		T data;
-		ListElement* next;
+		T data;					//Полезная нагрузка элемента списка.
+		ListElement* next;		//Указатель на следующий элемент списка (или NULL, если это последний элемент списка).
 	};
-	ListElement* begin;
-	ListElement* end;
+	ListElement* begin;			//Указатель на первый элемент списка.
+	ListElement* end;			//Указатель на последний элемент списка.
 public:
+	///Конструктор.
 	List();
+
+	///Метод, добавляющий новый элемент в конец списка.
+	///Входные параметры:
+	///\param T value - полезная нагрузка элемента списка.
 	void push_back(T value);
+
+	///Метод, очищающий весь список.
+	///Удаляются все элементы списка, поэтому, если в качестве полезной нагрузки выступает указатель на динамически выделенную область памяти,
+	///необходимо до вызова данного метода освободить эту область.
 	void clear();
+
+	///Метод, удаляющий определенный элемент списка.
+	///Входные параметры:
+	///\param unsigned long index - индекс удаляемого элемента списка.
 	void erase(int index);
+
+	///Геттер, возвращающий текущий размер списка.
 	int getLength();
+
+	///Перегрузка оператора []. Реализует доступ к полезной нагрузке определенного элемента списка.
+	///Входные параметры:
+	///\param unsigned long index - индекс элемента списка.
 	T& operator[] (int index);
+
+	///Деструктор.
 	~List();
 };
 
@@ -47,9 +69,9 @@ void List<T>::push_back(T value)
 	{
 		temp = new ListElement;
 	}
-	catch (bad_alloc& allocEx)
+	catch (std::bad_alloc& allocEx)
 	{
-		throw ListException("List -> push_back() -> Memory error\n");
+		throw ListException("List -> push_back() -> Memory error.\n");
 	}
 	temp->next = nullptr;
 	temp->data = value;
@@ -83,23 +105,23 @@ void List<T>::erase(int index)
 	{
 		throw ListException("List -> erase() -> Wrong index.\n");
 	}
-	ListElement* curElem = begin;
-	ListElement* tempPrev = begin;
+	ListElement* currentElement = begin;
+	ListElement* prevElement = begin;
 	int counter = index;
 	while (counter != 0)
 	{
-		curElem = curElem->next;
+		currentElement = currentElement->next;
 		counter--;
 	}
-	while ((tempPrev->next != curElem) && (index != 0))
+	while ((prevElement->next != currentElement) && (index != 0))
 	{
-		tempPrev = tempPrev->next;
+		prevElement = prevElement->next;
 	}
-	if (curElem == begin)
+	if (currentElement == begin)
 	{
 		if (length > 1)
 		{
-			begin = tempPrev->next;
+			begin = prevElement->next;
 		}
 		else
 		{
@@ -107,16 +129,16 @@ void List<T>::erase(int index)
 			end = nullptr;
 		}
 	}
-	else if (curElem == end)
+	else if (currentElement == end)
 	{
-		tempPrev->next = nullptr;
-		end = tempPrev;
+		prevElement->next = nullptr;
+		end = prevElement;
 	}
 	else
 	{
-		tempPrev->next = curElem->next;
+		prevElement->next = currentElement->next;
 	}
-	delete curElem;
+	delete currentElement;
 	length--;
 }
 
@@ -125,7 +147,7 @@ T& List<T>::operator[] (int index)
 {
 	if ((index >= length) || (index < 0))
 	{
-		throw ListException("List -> Wrong index.\n");
+		throw ListException("List -> operator [] -> Wrong index.\n");
 	}
 	ListElement* temp = begin;
 	while (index != 0)

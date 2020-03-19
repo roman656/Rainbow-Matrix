@@ -1,19 +1,21 @@
 #include "MainController.h"
 
-void MainController::readUserIntegerInput(int maxValue, int minValue, int& parameter)
+void MainController::readUserIntegerInput(short maxValue, short minValue, short& parameter)
 {
-	int input = 0;
-	cin >> input;
-	if (cin.fail())
+	short input = 0;
+	std::ostringstream exceptionOut;
+    exceptionOut << "Wrong input! Try again [" << minValue << ";" << maxValue << "]: ";
+	std::cin >> input;
+	if (std::cin.fail())
 	{
-		cin.clear();
-		while (cin.get() != '\n');
-		throw UserInputException("Wrong input! Try again [1;30]: ");
+		std::cin.clear();
+		while (std::cin.get() != '\n');
+		throw UserInputException(exceptionOut.str());
 	}
-	else if ((cin.peek() != '\n') || (input > maxValue) || (input < minValue))
+	else if ((std::cin.peek() != '\n') || (input > maxValue) || (input < minValue))
 	{
-		while (cin.get() != '\n');
-		throw UserInputException("Wrong input! Try again [1;30]: ");
+		while (std::cin.get() != '\n');
+		throw UserInputException(exceptionOut.str());
 	}
 	else
 	{
@@ -24,16 +26,16 @@ void MainController::readUserIntegerInput(int maxValue, int minValue, int& param
 void MainController::readUserSymbolInput(bool& parameter)
 {
 	char input = 0;
-	cin >> input;
-	if (cin.fail())
+	std::cin >> input;
+	if (std::cin.fail())
 	{
-		cin.clear();
-		while (cin.get() != '\n');
+		std::cin.clear();
+		while (std::cin.get() != '\n');
 		throw UserInputException("Wrong input! Try again [Y/N]: ");
 	}
-	else if (cin.peek() != '\n')
+	else if (std::cin.peek() != '\n')
 	{
-		while (cin.get() != '\n');
+		while (std::cin.get() != '\n');
 		throw UserInputException("Wrong input! Try again [Y/N]: ");
 	}
 	else
@@ -64,9 +66,8 @@ MainController::MainController()
 
 void MainController::readParameters()
 {
-	string messagesArray[] = {"Enter the following parameters:\n","Size of line [1;30]: ","Line spawn frequency [1;30]: ","Symbol spawn frequency [1;30]: ","Do I use different colors [Y/N]: "};
-	printf("%s",messagesArray[0].c_str());
-	printf("%s",messagesArray[1].c_str());
+	std::string messagesArray[] = {"Enter the following parameters:\n","Size of line [1;30]: ","Line spawn frequency [1;30]: ","Symbol spawn frequency [1;30]: ","Do I use different colors [Y/N]: "};
+	std::cout << messagesArray[0] << messagesArray[1];
 	while (1)
 	{
 		try
@@ -76,10 +77,10 @@ void MainController::readParameters()
 		}
 		catch (UserInputException& inputExc)
 		{
-			printf("%s", inputExc.what());
+			std::cout << inputExc.what();
 		}
 	}
-	printf("%s",messagesArray[2].c_str());
+	std::cout << messagesArray[2];
 	while (1)
 	{
 		try
@@ -89,10 +90,10 @@ void MainController::readParameters()
 		}
 		catch (UserInputException& inputExc)
 		{
-			printf("%s", inputExc.what());
+			std::cout << inputExc.what();
 		}
 	}
-	printf("%s",messagesArray[3].c_str());
+	std::cout << messagesArray[3];
 	while (1)
 	{
 		try
@@ -102,10 +103,10 @@ void MainController::readParameters()
 		}
 		catch (UserInputException& inputExc)
 		{
-			printf("%s", inputExc.what());
+			std::cout << inputExc.what();
 		}
 	}
-	printf("%s",messagesArray[4].c_str());
+	std::cout << messagesArray[4];
 	while (1)
 	{
 		try
@@ -115,7 +116,7 @@ void MainController::readParameters()
 		}
 		catch (UserInputException& inputExc)
 		{
-			printf("%s", inputExc.what());
+			std::cout << inputExc.what();
 		}
 	}
 }
@@ -161,9 +162,9 @@ void MainController::ncursesStart(bool useCursor, bool useKeypad, bool useEcho, 
 			fprintf(stderr,"ncursesStart() -> This terminal does not support colors.\n");
 			exit(EXIT_FAILURE);
         }
-        int i = 0;
-		int pairNo = 1;
-		int check = nColorPairs;
+        short i = 0;
+		short pairNo = 1;
+		short check = nColorPairs;
        	while (nColorPairs)
 		{
            	init_pair(pairNo,colorsArray[i],colorsArray[i+1]);
@@ -180,22 +181,45 @@ void MainController::ncursesStart(bool useCursor, bool useKeypad, bool useEcho, 
 	
 void MainController::drawingStart()
 {
-	int xMaxCoordinate;
-	int yMaxCoordinate;
+	short xMaxCoordinate;
+	short yMaxCoordinate;
 	getmaxyx(stdscr, yMaxCoordinate, xMaxCoordinate);
 	List <Line*> linesList;
 	Line* temp = NULL;
-	struct timespec request;
-	request.tv_sec = 0;
-	request.tv_nsec = 999999998 / symbolSpawnFrequency;
+	struct timespec sleepInterval, currentTime, tempInterval;
+	sleepInterval.tv_sec = 0;
+	sleepInterval.tv_nsec = 0;
+	currentTime.tv_sec = 0;
+	currentTime.tv_nsec = 0;
+	tempInterval.tv_sec = 0;
+	tempInterval.tv_nsec = 0;
+	bool canGetUpdateTime = true;
 	bool isTimeToSpawnLines = true;
-	int timeIntervalCounter = symbolSpawnFrequency;
+	bool isTimeToSetBeginTime = true;
+	long referenceTimeValue = 0;
 	while (1)
 	{
-		if (timeIntervalCounter == symbolSpawnFrequency)
+		if (clock_gettime(CLOCK_REALTIME, &currentTime) != 0)
+		{
+			int limit = linesList.getLength();
+			for (int i = 0; i < limit; i++)
+    		{
+				delete linesList[i];
+			}
+			linesList.clear();
+			endwin();
+			fprintf(stderr,"In drawingStart() -> clock_gettime() error.\n");
+			exit(EXIT_FAILURE);
+		}
+		if (isTimeToSetBeginTime)
+		{
+			isTimeToSetBeginTime = false;
+			referenceTimeValue = currentTime.tv_sec * 1000000000 + currentTime.tv_nsec;
+		}
+		if ((currentTime.tv_sec * 1000000000 + currentTime.tv_nsec) - referenceTimeValue >= 999999998)
 		{
 			isTimeToSpawnLines = true;
-			timeIntervalCounter = 0;
+			referenceTimeValue = currentTime.tv_sec * 1000000000 + currentTime.tv_nsec;
 		}
 		if (isTimeToSpawnLines)
 		{
@@ -203,7 +227,7 @@ void MainController::drawingStart()
 			{
 				try
 				{
-					temp = new Line(lineSize, rand() % xMaxCoordinate, yMaxCoordinate, isPolychromy, rand() % symbolSpawnFrequency);
+					temp = new Line(isPolychromy, lineSize, rand() % xMaxCoordinate, yMaxCoordinate, symbolSpawnFrequency, currentTime);
 					linesList.push_back(temp);
 					temp = NULL;
 				}
@@ -219,7 +243,7 @@ void MainController::drawingStart()
 					fprintf(stderr,"Lines spawner -> %s",ListEx.what());
 					exit(EXIT_FAILURE);
 				}
-				catch (bad_alloc& allocEx)
+				catch (std::bad_alloc& allocEx)
 				{
 					int limit = linesList.getLength();
 					for (int i = 0; i < limit; i++)
@@ -238,15 +262,32 @@ void MainController::drawingStart()
     	{
 			try
 			{
-				(linesList[i])->printNextStep();
+				(linesList[i])->printNextStep(currentTime);
+				tempInterval = (linesList[i])->getUpdateTime();
+				long difference = (tempInterval.tv_sec * 1000000000 + tempInterval.tv_nsec) - (currentTime.tv_sec * 1000000000 + currentTime.tv_nsec);
+				if ((canGetUpdateTime) && (difference > 0))
+				{
+					canGetUpdateTime = false;
+					sleepInterval.tv_nsec = difference % 1000000000;
+					sleepInterval.tv_sec = difference / 1000000000;
+					
+				}
+				else
+				{
+					if ((sleepInterval.tv_sec * 1000000000 + sleepInterval.tv_nsec) > difference)
+					{
+						sleepInterval.tv_nsec = difference % 1000000000;
+						sleepInterval.tv_sec = difference / 1000000000;
+					}
+				}
 			}
-			catch(LineException& finishLineExc)
+			catch (LineException& finishLineExc)
 			{
 				delete linesList[i];
 				linesList.erase(i);
 				i--;
 			}
-			catch (bad_alloc& allocEx)
+			catch (ListException& listEx)
 			{
 				int limit = linesList.getLength();
 				for (int i = 0; i < limit; i++)
@@ -255,12 +296,25 @@ void MainController::drawingStart()
 				}
 				linesList.clear();
 				endwin();
-				fprintf(stderr,"Symbol spawner -> Memory error: %s\n",allocEx.what());
+				fprintf(stderr,"Symbol spawner -> List error: %s\n", listEx.what());
+				exit(EXIT_FAILURE);
+			}
+			catch (std::bad_alloc& allocEx)
+			{
+				int limit = linesList.getLength();
+				for (int i = 0; i < limit; i++)
+    			{
+					delete linesList[i];
+				}
+				linesList.clear();
+				endwin();
+				fprintf(stderr,"Symbol spawner -> Memory error: %s\n", allocEx.what());
 				exit(EXIT_FAILURE);
 			}
 		}
+		canGetUpdateTime = true;
 		refresh();
-		if (nanosleep(&request, NULL) != 0)
+		if (nanosleep(&sleepInterval, NULL) != 0)
 		{
 			int limit = linesList.getLength();
 			for (int i = 0; i < limit; i++)
@@ -269,9 +323,8 @@ void MainController::drawingStart()
 			}
 			linesList.clear();
 			endwin();
-			fprintf(stderr,"drawingStart() -> nanosleep() error. Value: %ld\n", request.tv_nsec);
+			fprintf(stderr,"drawingStart() -> nanosleep() error.\nSeconds: %ld\nNanoseconds: %ld\n", sleepInterval.tv_sec, sleepInterval.tv_nsec);
 			exit(EXIT_FAILURE);
 		}
-		timeIntervalCounter++;
 	}
 }

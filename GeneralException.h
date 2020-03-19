@@ -3,15 +3,19 @@
 
 #include <stdexcept>
 
-using namespace std;
-
-class GeneralException : public exception 
+///Класс основного исключения. Для наиболее общих случаев.
+class GeneralException : public std::exception 
 {
 private:
-	string errorMessage;
+	std::string errorMessage;	//Строка, содержащая сообщение, описывающее исключение.
 public:
-	GeneralException(string message);
-	const char* what() const noexcept override;
+	///Конструктор.
+	///Входные параметры:
+	///\param std::string message - строка, содержащая сообщение, описывающее исключение.
+	GeneralException(std::string message);	
+
+	///Метод, возвращающий errorMessage.
+	const char* what() const noexcept override;	
 };
 
 #endif // _GENERALEXCEPTION_H_

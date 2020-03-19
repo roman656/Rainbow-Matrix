@@ -3,10 +3,12 @@
 
 #include "GeneralException.h"
 
+///Класс исключения линий.
 class LineException : public GeneralException 
 {
 public:
-	LineException(string message) : GeneralException(message)
+	///Конструктор.
+	LineException(std::string message) : GeneralException(message)
 	{}
 };
 

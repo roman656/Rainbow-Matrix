@@ -3,10 +3,12 @@
 
 #include "GeneralException.h"
 
+///Класс исключения для списка.
 class ListException : public GeneralException 
 {
 public:
-	ListException(string message) : GeneralException(message)
+	///Конструктор.
+	ListException(std::string message) : GeneralException(message)
 	{}
 };
 

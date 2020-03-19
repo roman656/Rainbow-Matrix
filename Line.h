@@ -4,19 +4,40 @@
 #include "LineException.h"
 #include "RandomSymbol.h"
 
+///Класс линии.
 class Line
 {
 private:
-	int delay;
-	int size;
-	int xCoordinate;
-	int yTopCoordinate;
-	int yBottomCoordinate;
-	int yWindowBottomCoordinate;
-	bool isPolychromy;
+	bool canExplode;					//Флаг: может ли на данном этапе произойти взрыв.
+	bool isPolychromy;					//Флаг: состоит ли линия из разноцветных символов.
+	short size;							//Размер линии (число символов).
+	short xCoordinate;					//Координата линии по оси OX.
+	short yTopCoordinate;				//1 + координата первого символа линии по оси OY (Пример: если на экране отображен 1й символ (координата по OY = 0), то значение данной переменной равно 1).
+	short yBottomCoordinate;			//Координата последнего символа линии по оси OY.
+	short yWindowBottomCoordinate;		//Максимально допустимая координата по оси OY.
+	struct timespec updateTime;			//Время (секнды и наносекунды) после которого необходимо обновить состояние линии (Например, напечатать следующий символ). 
+	struct timespec updateTimeStep;		//Временной шаг, позволяющй линии двигаться с постоянной скоростью.
 public:
-	Line(int lineSize, int xCoordinate, int yWindowBottomCoordinate, bool isPolychromy, int delay);
-	void printNextStep();
+	///Конструктор.
+	///Входные параметры:
+	///\param bool isPolychromy - флаг: состоит ли линия из разноцветных символов;
+	///\param short lineSize - размер линии (число символов);
+	///\param short xCoordinate - координата линии по оси OX;
+	///\param short yWindowBottomCoordinate - максимально допустимая координата по оси OY;
+	///\param short symbolSpawnFrequency - скорость линии (частота появления символов). Число символов, которые должны быть напечатаны за еденицу времени;
+	///\param struct timespec currentTime - текущее время (секнды и наносекунды).
+	Line(bool isPolychromy, short lineSize, short xCoordinate, short yWindowBottomCoordinate, short symbolSpawnFrequency, struct timespec currentTime);	
+
+	///Метод, обновляющий состояние линии (метод сам определяет, в зависимости от полученного параметра, какие действия производить).
+	///Входные параметры:
+	///\param struct timespec currentTime - текущее время (секнды и наносекунды).
+	void printNextStep(struct timespec currentTime);	
+
+	///Геттер, возвращающий canExplode.
+	bool getCanExplode();
+
+	///Геттер, возвращающий updateTime.
+	struct timespec getUpdateTime();																														
 };
 
 #endif // _LINE_H_

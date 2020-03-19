@@ -4,19 +4,26 @@
 #include <ncurses.h>
 #include <cstdlib>
 
-#define MY_ATTRIBUTES A_BOLD   //Default value: A_NORMAL
-#define DEFAULT_COLOR_PAIR 1
+#define MY_ATTRIBUTES A_BOLD   	//Дополнительные атрибуты символа. Значение по умолчанию: A_NORMAL.
+#define DEFAULT_COLOR_PAIR 1	//Цветовая пара (текст/фон) по умолчанию - 1я.
 
-using namespace std;
-
+///Класс случайного символа.
 class RandomSymbol
 {
 private:
-	char symbol;
-	int attribute;
+	char symbol;		//Символ.
+	int attribute;		//Атрибуты символа.
 public:
+	///Конструктор.
+	///Входные параметры:
+	///\param bool isPolychromy - флаг: может ли символ иметь случайный цвет. Если false - символ будет иметь цвет, заданный по умолчанию (DEFAULT_COLOR_PAIR). 
 	RandomSymbol(bool isPolychromy);
-	void printRandomSymbol(int yCoordinate, int xCoordinate);
+
+	///Метод, печатающий по заданным координатам на экране символ. 
+	///Входные параметры:
+	///\param short yCoordinate - координата выводимого символа по оси OY;
+	///\param short xCoordinate - координата выводимого символа по оси OX.
+	void printRandomSymbol(short yCoordinate, short xCoordinate);
 };
 
 #endif // _RANDOMSYMBOL_H_
