@@ -8,11 +8,11 @@
 #include <iostream>
 #include <sstream>
 
-#define DEFAULT_POLYCHROMY true					//Значение флага многоцветности по умолчанию.
+#define DEFAULT_POLYCHROMY true				//Значение флага многоцветности по умолчанию.
 #define DEFAULT_SYMBOL_SPAWN_FREQUENCY 10		//Частота появления символов (скорость линий) по умолчанию.
 #define DEFAULT_LINE_SPAWN_FREQUENCY 5			//Частота появления линий по умолчанию.
-#define DEFAULT_LINE_SIZE 4 					//Размер линий по умолчанию.
-#define DEFAULT_LINE_EXPLOSION_PROBABILITY 1	//Вероятность взрыва линии (%) по умолчанию.
+#define DEFAULT_LINE_SIZE 4 				//Размер линий по умолчанию.
+#define DEFAULT_LINE_EXPLOSION_PROBABILITY 1		//Вероятность взрыва линии (%) по умолчанию.
 #define DEFAULT_MIN_EXPLOSION_RADIUS 1			//Минимальный радиус взрыва линии по умолчанию.
 #define DEFAULT_MAX_EXPLOSION_RADIUS 15			//Максимальный радиус взрыва линии по умолчанию.
 #define DEFAULT_EXPLOSION_RADIAL_SPEED 10		//Радиальная скорость взрыва (частота появления символов) по умолчанию.
@@ -21,14 +21,14 @@
 class MainController
 {
 private:
-	bool isPolychromy;							//Флаг: использовать ли различные цвета.
-	short lineSize;								//Размер линий (число символов в линии).
-	short lineSpawnFrequency;					//Частота появления линий (число линий в еденицу времени).
-	short symbolSpawnFrequency;					//Частота появления символов (число символов в еденицу времени).
-	short lineExplosionProbability;				//Вероятность взрыва линии (%) [0;100].			
-	short minExplosionRadius;					//Минимальный радиус взрыва линии.
-	short maxExplosionRadius;					//Максимальный радиус взрыва линии.
-	short explosionRadialSpeed;					//Радиальная скорость взрыва (частота появления символов).
+	bool isPolychromy;				//Флаг: использовать ли различные цвета.
+	short lineSize;					//Размер линий (число символов в линии).
+	short lineSpawnFrequency;			//Частота появления линий (число линий в еденицу времени).
+	short symbolSpawnFrequency;			//Частота появления символов (число символов в еденицу времени).
+	short lineExplosionProbability;			//Вероятность взрыва линии (%) [0;100].			
+	short minExplosionRadius;			//Минимальный радиус взрыва линии.
+	short maxExplosionRadius;			//Максимальный радиус взрыва линии.
+	short explosionRadialSpeed;			//Радиальная скорость взрыва (частота появления символов).
 
 	///Метод, считывающий целочисленный пользовательский ввод.
 	///Входные параметры:
