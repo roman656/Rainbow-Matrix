@@ -19,12 +19,12 @@ void Explosion::printNextStep(struct timespec currentTime)
 	{
 		short directionSwitch;		//Отвечает за направление, в котором будет производиться печать (регулирует изменения координат).
 		short directionCounter;		//Счетчик, переключающий directionSwitch через определенное число итераций цикла печати.
-		short yCoordinate;			//Координата печатаемого символа по оси OY.
-		short xCoordinate;			//Координата печатаемого символа по оси OX.
+		short yCoordinate;		//Координата печатаемого символа по оси OY.
+		short xCoordinate;		//Координата печатаемого символа по оси OX.
 		short yMaxCoordinate;		//Максимальная координата по оси OY (печать по данной координате недопустима).
 		short xMaxCoordinate;		//Максимальная координата по оси OX (печать по данной координате недопустима).
-		getmaxyx(stdscr, yMaxCoordinate, xMaxCoordinate);						//Получение значений yMaxCoordinate и xMaxCoordinate.
-		if (currentExplosionRadius > 0)											//Условие необходимости затирания прошлого контура взрыва.
+		getmaxyx(stdscr, yMaxCoordinate, xMaxCoordinate);	//Получение значений yMaxCoordinate и xMaxCoordinate.
+		if (currentExplosionRadius > 0)				//Условие необходимости затирания прошлого контура взрыва.
 		{
 			short nRandomSymbolsAtPreviousStep = currentExplosionRadius * 4;	//Необходимое количество случайных символов для отображения взрыва на прошлом шаге.
 			directionSwitch = 0;
@@ -71,8 +71,8 @@ void Explosion::printNextStep(struct timespec currentTime)
 				directionCounter++;
 			}
 		}
-		currentExplosionRadius++;										//Печать нового контура взрыва.
-		if (currentExplosionRadius > finalExplosionRadius)				//Если радиус нового взрыва больше максимально допустимого - весь взрыв был отрисован и пора освободить от него память.
+		currentExplosionRadius++;				//Печать нового контура взрыва.
+		if (currentExplosionRadius > finalExplosionRadius)	//Если радиус нового взрыва больше максимально допустимого - весь взрыв был отрисован и пора освободить от него память.
 		{
 			throw ExplosionException("The explosion has completed its task.");
 		}
@@ -84,7 +84,6 @@ void Explosion::printNextStep(struct timespec currentTime)
 		xCoordinate = xCenterCoordinate - currentExplosionRadius;
 		for (short i = 0; i < nRandomSymbolsAtThisStep; i++)
 		{
-			//mvprintw(5 + nRandomSymbolsAtThisStep,0,"%d %d %d %d",directionCounter,directionSwitch,xCoordinate,yCoordinate);
 			if ((yCoordinate >= 0) && (xCoordinate >= 0) && (yCoordinate < yMaxCoordinate) && (xCoordinate < xMaxCoordinate))
 			{
 				temp = new RandomSymbol(isPolychromy);
@@ -124,8 +123,6 @@ void Explosion::printNextStep(struct timespec currentTime)
 				directionSwitch++;
 			}
 			directionCounter++;
-			//mvprintw(6 + nRandomSymbolsAtThisStep,0,"%d %d %d %d",directionCounter,directionSwitch,xCoordinate,yCoordinate);
-			//getch();
 		}
 		if (updateTimeStep.tv_nsec + currentTime.tv_nsec > 999999998)	//Перезапись времени обновления. Данное условие отвечает за корректную запись времени.
 		{
