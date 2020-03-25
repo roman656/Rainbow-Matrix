@@ -4,7 +4,7 @@ void MainController::readUserIntegerInput(short maxValue, short minValue, short&
 {
 	short input = 0;
 	std::ostringstream exceptionOut;
-    exceptionOut << "Wrong input! Try again [" << minValue << ";" << maxValue << "]: ";
+    	exceptionOut << "Wrong input! Try again [" << minValue << ";" << maxValue << "]: ";
 	std::cin >> input;
 	if (std::cin.fail())
 	{
@@ -186,52 +186,52 @@ void MainController::ncursesStart(bool useCursor, bool useKeypad, bool useEcho, 
 	}
    	if (useCursor) 
 	{
-       	curs_set(1);
+       		curs_set(1);
    	}
    	else 
 	{
-       	curs_set(0);
-    }
-    if (useKeypad)
+       		curs_set(0);
+    	}
+   	if (useKeypad)
 	{
-       	keypad(stdscr, 1);
-    }
-    else 
+       		keypad(stdscr, 1);
+    	}
+    	else 
 	{
   	 	keypad(stdscr, 0);
-    }
-    if (useEcho) 
+    	}
+    	if (useEcho) 
 	{
-       	echo();
-    }
-    else 
+       		echo();
+    	}
+    	else 
 	{
-       	noecho();
-    }
-    cbreak();    //частичный контроль клавиатуры (Ctrl+С - закроет программу)
-    if (useColor) 
+       		noecho();
+    	}
+    	cbreak();    //частичный контроль клавиатуры (Ctrl+С - закроет программу)
+    	if (useColor) 
 	{
-        start_color();
-        if (!has_colors()) 
+		start_color();
+		if (!has_colors()) 
 		{
 			endwin();
 			fprintf(stderr,"ncursesStart() -> This terminal does not support colors.\n");
 			exit(EXIT_FAILURE);
-        }
-        short i = 0;
+		}
+		short i = 0;
 		short pairNo = 1;
 		short check = nColorPairs;
-       	while (nColorPairs)
+		while (nColorPairs)
 		{
-           	init_pair(pairNo,colorsArray[i],colorsArray[i+1]);
-           	i += 2;
-           	pairNo++;
-           	nColorPairs--;
-        }
-       	if (check != 0) 
+           		init_pair(pairNo,colorsArray[i],colorsArray[i+1]);
+           		i += 2;
+           		pairNo++;
+           		nColorPairs--;
+        	}
+       		if (check != 0) 
 		{
-           	wattrset(stdscr,COLOR_PAIR(1));
-       	}
+           		wattrset(stdscr,COLOR_PAIR(1));
+       		}
    	}
 }
 	
@@ -262,13 +262,13 @@ void MainController::drawingStart()
 		{
 			int limit = linesList.getLength();
 			for (int i = 0; i < limit; i++)
-    		{
+    			{
 				delete linesList[i];
 			}
 			linesList.clear();
 			limit = explosionsList.getLength();
 			for (int i = 0; i < limit; i++)
-    		{
+    			{
 				delete explosionsList[i];
 			}
 			explosionsList.clear();
@@ -300,7 +300,7 @@ void MainController::drawingStart()
 				{
 					int limit = linesList.getLength();
 					for (int i = 0; i < limit; i++)
-    				{
+    					{
 						delete linesList[i];
 					}
 					linesList.clear();
@@ -318,7 +318,7 @@ void MainController::drawingStart()
 				{
 					int limit = linesList.getLength();
 					for (int i = 0; i < limit; i++)
-    				{
+    					{
 						delete linesList[i];
 					}
 					linesList.clear();
@@ -336,7 +336,7 @@ void MainController::drawingStart()
 			isTimeToSpawnLines = false;
 		}
 		for (int i = 0; i < linesList.getLength(); i++)
-    	{
+    		{
 			try
 			{
 				wasExplosion = false;
@@ -375,13 +375,13 @@ void MainController::drawingStart()
 			{
 				int limit = linesList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete linesList[i];
 				}
 				linesList.clear();
 				limit = explosionsList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete explosionsList[i];
 				}
 				explosionsList.clear();
@@ -393,13 +393,13 @@ void MainController::drawingStart()
 			{
 				int limit = linesList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete linesList[i];
 				}
 				linesList.clear();
 				limit = explosionsList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete explosionsList[i];
 				}
 				explosionsList.clear();
@@ -409,7 +409,7 @@ void MainController::drawingStart()
 			}
 		}
 		for (int i = 0; i < explosionsList.getLength(); i++)
-    	{
+    		{
 			try
 			{
 				(explosionsList[i])->printNextStep(currentTime);
@@ -431,13 +431,13 @@ void MainController::drawingStart()
 			{
 				int limit = linesList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete linesList[i];
 				}
 				linesList.clear();
 				limit = explosionsList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete explosionsList[i];
 				}
 				explosionsList.clear();
@@ -449,13 +449,13 @@ void MainController::drawingStart()
 			{
 				int limit = linesList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete linesList[i];
 				}
 				linesList.clear();
 				limit = explosionsList.getLength();
 				for (int i = 0; i < limit; i++)
-    			{
+    				{
 					delete explosionsList[i];
 				}
 				explosionsList.clear();
@@ -470,13 +470,13 @@ void MainController::drawingStart()
 		{
 			int limit = linesList.getLength();
 			for (int i = 0; i < limit; i++)
-    		{
+    			{
 				delete linesList[i];
 			}
 			linesList.clear();
 			limit = explosionsList.getLength();
 			for (int i = 0; i < limit; i++)
-    		{
+    			{
 				delete explosionsList[i];
 			}
 			explosionsList.clear();
