@@ -8,12 +8,12 @@
 class Explosion
 {
 private:
-	bool isPolychromy;					//Флаг: состоит ли взрыв из разноцветных символов.
-	short xCenterCoordinate;			//Координата центра взрыва по оси OX.
-	short yCenterCoordinate;			//Координата центра взрыва по оси OY.
-	short finalExplosionRadius;			//Конечный радиус взрыва.
+	bool isPolychromy;			//Флаг: состоит ли взрыв из разноцветных символов.
+	short xCenterCoordinate;		//Координата центра взрыва по оси OX.
+	short yCenterCoordinate;		//Координата центра взрыва по оси OY.
+	short finalExplosionRadius;		//Конечный радиус взрыва.
 	short currentExplosionRadius;		//Текущий радиус взрыва.
-	struct timespec updateTime;			//Время (секнды и наносекунды) после которого необходимо обновить состояние взрыва. 
+	struct timespec updateTime;		//Время (секнды и наносекунды) после которого необходимо обновить состояние взрыва. 
 	struct timespec updateTimeStep;		//Временной шаг, позволяющй взрыву расходиться с постоянной скоростью.
 public:
 	///Конструктор.
