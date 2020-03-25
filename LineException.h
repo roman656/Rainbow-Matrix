@@ -13,4 +13,3 @@ public:
 };
 
 #endif // _LINEEXCEPTION_H_
-

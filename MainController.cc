@@ -61,12 +61,16 @@ MainController::MainController()
 	isPolychromy = DEFAULT_POLYCHROMY;
 	lineSpawnFrequency = DEFAULT_LINE_SPAWN_FREQUENCY;
 	symbolSpawnFrequency = DEFAULT_SYMBOL_SPAWN_FREQUENCY;
+	lineExplosionProbability = DEFAULT_LINE_EXPLOSION_PROBABILITY;
+	minExplosionRadius = DEFAULT_MIN_EXPLOSION_RADIUS;
+	maxExplosionRadius = DEFAULT_MAX_EXPLOSION_RADIUS;
+	explosionRadialSpeed = DEFAULT_EXPLOSION_RADIAL_SPEED;
 	srand(time(NULL));
 }
 
 void MainController::readParameters()
 {
-	std::string messagesArray[] = {"Enter the following parameters:\n","Size of line [1;30]: ","Line spawn frequency [1;30]: ","Symbol spawn frequency [1;30]: ","Do I use different colors [Y/N]: "};
+	std::string messagesArray[] = {"Enter the following parameters:\n","Size of line [1;30]: ","Line spawn frequency [1;30]: ","Symbol spawn frequency [1;30]: ","Do I use different colors [Y/N]: ","Line explosion probability (in %) [0;100]: ","Minimum radius of each explosion [1;15]: ","Maximum radius of each explosion [1;15]: "};
 	std::cout << messagesArray[0] << messagesArray[1];
 	while (1)
 	{
@@ -119,6 +123,58 @@ void MainController::readParameters()
 			std::cout << inputExc.what();
 		}
 	}
+	std::cout << messagesArray[5];
+	while (1)
+	{
+		try
+		{		
+			readUserIntegerInput(100, 0, lineExplosionProbability);
+			break;
+		}
+		catch (UserInputException& inputExc)
+		{
+			std::cout << inputExc.what();
+		}
+	}
+	bool canCheck = false;
+	while (1)
+	{
+		if ((maxExplosionRadius < minExplosionRadius) && canCheck)
+		{
+			std::cout << "Wrong input! The maximum radius can not be less than the minimum radius... Try again." << std::endl;
+		}
+		else if (canCheck)
+		{
+			break;
+		}
+		std::cout << messagesArray[6];
+		while (1)
+		{
+			try
+			{		
+				readUserIntegerInput(15, 1, minExplosionRadius);
+				break;
+			}
+			catch (UserInputException& inputExc)
+			{
+				std::cout << inputExc.what();
+			}
+		}
+		std::cout << messagesArray[7];
+		while (1)
+		{
+			try
+			{		
+				readUserIntegerInput(15, 1, maxExplosionRadius);
+				break;
+			}
+			catch (UserInputException& inputExc)
+			{
+				std::cout << inputExc.what();
+			}
+		}
+		canCheck = true;
+	}	
 }
 	
 void MainController::ncursesStart(bool useCursor, bool useKeypad, bool useEcho, bool useColor, int nColorPairs, int* colorsArray)
@@ -184,8 +240,10 @@ void MainController::drawingStart()
 	short xMaxCoordinate;
 	short yMaxCoordinate;
 	getmaxyx(stdscr, yMaxCoordinate, xMaxCoordinate);
+	List <Explosion*> explosionsList;
+	Explosion* tempExplosion = NULL;
 	List <Line*> linesList;
-	Line* temp = NULL;
+	Line* tempLine = NULL;
 	struct timespec sleepInterval, currentTime, tempInterval;
 	sleepInterval.tv_sec = 0;
 	sleepInterval.tv_nsec = 0;
@@ -193,6 +251,7 @@ void MainController::drawingStart()
 	currentTime.tv_nsec = 0;
 	tempInterval.tv_sec = 0;
 	tempInterval.tv_nsec = 0;
+	bool wasExplosion = false;
 	bool canGetUpdateTime = true;
 	bool isTimeToSpawnLines = true;
 	bool isTimeToSetBeginTime = true;
@@ -207,6 +266,12 @@ void MainController::drawingStart()
 				delete linesList[i];
 			}
 			linesList.clear();
+			limit = explosionsList.getLength();
+			for (int i = 0; i < limit; i++)
+    		{
+				delete explosionsList[i];
+			}
+			explosionsList.clear();
 			endwin();
 			fprintf(stderr,"In drawingStart() -> clock_gettime() error.\n");
 			exit(EXIT_FAILURE);
@@ -227,9 +292,9 @@ void MainController::drawingStart()
 			{
 				try
 				{
-					temp = new Line(isPolychromy, lineSize, rand() % xMaxCoordinate, yMaxCoordinate, symbolSpawnFrequency, currentTime);
-					linesList.push_back(temp);
-					temp = NULL;
+					tempLine = new Line(isPolychromy, lineSize, rand() % xMaxCoordinate, yMaxCoordinate, symbolSpawnFrequency, lineExplosionProbability, currentTime);
+					linesList.push_back(tempLine);
+					tempLine = NULL;
 				}
 				catch (ListException& ListEx)
 				{
@@ -239,6 +304,12 @@ void MainController::drawingStart()
 						delete linesList[i];
 					}
 					linesList.clear();
+					limit = explosionsList.getLength();
+					for (int i = 0; i < limit; i++)
+					{
+						delete explosionsList[i];
+					}
+					explosionsList.clear();
 					endwin();
 					fprintf(stderr,"Lines spawner -> %s",ListEx.what());
 					exit(EXIT_FAILURE);
@@ -251,6 +322,12 @@ void MainController::drawingStart()
 						delete linesList[i];
 					}
 					linesList.clear();
+					limit = explosionsList.getLength();
+					for (int i = 0; i < limit; i++)
+					{
+						delete explosionsList[i];
+					}
+					explosionsList.clear();
 					endwin();
 					fprintf(stderr,"Lines spawner -> Memory error: %s\n",allocEx.what());
 					exit(EXIT_FAILURE);
@@ -262,7 +339,8 @@ void MainController::drawingStart()
     	{
 			try
 			{
-				(linesList[i])->printNextStep(currentTime);
+				wasExplosion = false;
+				(linesList[i])->printNextStep(currentTime, wasExplosion);
 				tempInterval = (linesList[i])->getUpdateTime();
 				long difference = (tempInterval.tv_sec * 1000000000 + tempInterval.tv_nsec) - (currentTime.tv_sec * 1000000000 + currentTime.tv_nsec);
 				if ((canGetUpdateTime) && (difference > 0))
@@ -280,6 +358,12 @@ void MainController::drawingStart()
 						sleepInterval.tv_sec = difference / 1000000000;
 					}
 				}
+				if (wasExplosion)
+				{
+					tempExplosion = new Explosion(isPolychromy, (linesList[i])->getXCoordinate(), (linesList[i])->getYTopCoordinate(), minExplosionRadius + rand() % (maxExplosionRadius - minExplosionRadius + 1), explosionRadialSpeed, currentTime);
+					explosionsList.push_back(tempExplosion);
+					tempExplosion = NULL;
+				}
 			}
 			catch (LineException& finishLineExc)
 			{
@@ -295,6 +379,12 @@ void MainController::drawingStart()
 					delete linesList[i];
 				}
 				linesList.clear();
+				limit = explosionsList.getLength();
+				for (int i = 0; i < limit; i++)
+    			{
+					delete explosionsList[i];
+				}
+				explosionsList.clear();
 				endwin();
 				fprintf(stderr,"Symbol spawner -> List error: %s\n", listEx.what());
 				exit(EXIT_FAILURE);
@@ -307,6 +397,68 @@ void MainController::drawingStart()
 					delete linesList[i];
 				}
 				linesList.clear();
+				limit = explosionsList.getLength();
+				for (int i = 0; i < limit; i++)
+    			{
+					delete explosionsList[i];
+				}
+				explosionsList.clear();
+				endwin();
+				fprintf(stderr,"Symbol spawner -> Memory error: %s\n", allocEx.what());
+				exit(EXIT_FAILURE);
+			}
+		}
+		for (int i = 0; i < explosionsList.getLength(); i++)
+    	{
+			try
+			{
+				(explosionsList[i])->printNextStep(currentTime);
+				tempInterval = (explosionsList[i])->getUpdateTime();
+				long difference = (tempInterval.tv_sec * 1000000000 + tempInterval.tv_nsec) - (currentTime.tv_sec * 1000000000 + currentTime.tv_nsec);
+				if ((sleepInterval.tv_sec * 1000000000 + sleepInterval.tv_nsec) > difference)
+				{
+					sleepInterval.tv_nsec = difference % 1000000000;
+					sleepInterval.tv_sec = difference / 1000000000;
+				}
+			}
+			catch (ExplosionException& finishExplosionExc)
+			{
+				delete explosionsList[i];
+				explosionsList.erase(i);
+				i--;
+			}
+			catch (ListException& listEx)
+			{
+				int limit = linesList.getLength();
+				for (int i = 0; i < limit; i++)
+    			{
+					delete linesList[i];
+				}
+				linesList.clear();
+				limit = explosionsList.getLength();
+				for (int i = 0; i < limit; i++)
+    			{
+					delete explosionsList[i];
+				}
+				explosionsList.clear();
+				endwin();
+				fprintf(stderr,"Symbol spawner -> List error: %s\n", listEx.what());
+				exit(EXIT_FAILURE);
+			}
+			catch (std::bad_alloc& allocEx)
+			{
+				int limit = linesList.getLength();
+				for (int i = 0; i < limit; i++)
+    			{
+					delete linesList[i];
+				}
+				linesList.clear();
+				limit = explosionsList.getLength();
+				for (int i = 0; i < limit; i++)
+    			{
+					delete explosionsList[i];
+				}
+				explosionsList.clear();
 				endwin();
 				fprintf(stderr,"Symbol spawner -> Memory error: %s\n", allocEx.what());
 				exit(EXIT_FAILURE);
@@ -322,6 +474,12 @@ void MainController::drawingStart()
 				delete linesList[i];
 			}
 			linesList.clear();
+			limit = explosionsList.getLength();
+			for (int i = 0; i < limit; i++)
+    		{
+				delete explosionsList[i];
+			}
+			explosionsList.clear();
 			endwin();
 			fprintf(stderr,"drawingStart() -> nanosleep() error.\nSeconds: %ld\nNanoseconds: %ld\n", sleepInterval.tv_sec, sleepInterval.tv_nsec);
 			exit(EXIT_FAILURE);
